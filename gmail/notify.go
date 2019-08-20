@@ -6,12 +6,12 @@ import (
 	"fmt"
 	"hash/fnv"
 	"io/ioutil"
-	"log"
 	"net/http"
 	"os"
 	"path/filepath"
 	"strings"
 
+	log "github.com/sirupsen/logrus"
 	"golang.org/x/net/context"
 	"golang.org/x/oauth2"
 	"golang.org/x/oauth2/google"
@@ -20,14 +20,16 @@ import (
 
 var (
 	SecretsDir string
+	To         string
+	From       string
 
-	Scopes = []string{
-		gmail.GmailSendScope,
-	}
+	Scopes = []string{gmail.GmailSendScope}
 )
 
 func init() {
 	SecretsDir = mustEnv("NOTIFY_SECRETS")
+	To = mustEnv("NOTIFY_TO")
+	From = mustEnv("NOTIFY_FROM")
 }
 
 // Retrieve a token, saves the token, then returns the generated client.
@@ -122,8 +124,8 @@ func Run(subject, body string) {
 	}
 
 	call := srv.Users.Messages.Send("me", Message{
-		From:    mustEnv("NOTIFY_FROM"),
-		To:      mustEnv("NOTIFY_TO"),
+		From:    From,
+		To:      To,
 		Subject: subject,
 		Body:    body,
 	}.Format())
@@ -131,7 +133,7 @@ func Run(subject, body string) {
 	if err != nil {
 		log.Fatalf("failed to send mail: %v", err)
 	}
-	fmt.Printf("%#v\n", msg)
+	log.Infof("gmail: sent message: %v", msg.ServerResponse.HTTPStatusCode)
 }
 
 type Message struct {
