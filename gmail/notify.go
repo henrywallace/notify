@@ -100,7 +100,7 @@ func mustEnv(env string) string {
 }
 
 func Run() {
-	cred := filepath.Join(SecretsDir, "credentials.json")
+	cred := filepath.Join(SecretsDir, "google-credentials.json")
 	b, err := ioutil.ReadFile(cred)
 	if err != nil {
 		log.Fatalf("Unable to read client secret file: %v", err)
