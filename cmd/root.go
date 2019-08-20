@@ -2,10 +2,10 @@ package cmd
 
 import (
 	"fmt"
+	"log"
 	"os"
 
 	"github.com/henrywallace/homelab/go/notify/gmail"
-	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 )
 
@@ -17,12 +17,14 @@ var rootCmd = &cobra.Command{
 
 func init() {
 	rootCmd.Flags().StringP("type", "t", "gmail", "kind of notifation to send")
-	rootCmd.Flags().StringP("subject", "s", "config.toml", "toml file to trigger config")
-	rootCmd.Flags().StringSliceP("body", "b", nil, "config trigger names to only run")
+	rootCmd.Flags().StringP("subject", "s", "", "subject of the notification")
+	rootCmd.Flags().StringP("body", "b", "", "body of the notification")
 }
 
 func main(cmd *cobra.Command, args []string) error {
-	gmail.Run()
+	subject := mustString(cmd, "subject")
+	body := mustString(cmd, "body")
+	gmail.Run(subject, body)
 	return nil
 }
 
@@ -36,11 +38,7 @@ func Execute() {
 	}
 }
 
-func mustString(
-	log *logrus.Logger,
-	cmd *cobra.Command,
-	name string,
-) string {
+func mustString(cmd *cobra.Command, name string) string {
 	val, err := cmd.Flags().GetString(name)
 	if err != nil {
 		log.Fatal(err)

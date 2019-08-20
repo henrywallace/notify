@@ -99,7 +99,7 @@ func mustEnv(env string) string {
 	return val
 }
 
-func Run() {
+func Run(subject, body string) {
 	cred := filepath.Join(SecretsDir, "google-credentials.json")
 	b, err := ioutil.ReadFile(cred)
 	if err != nil {
@@ -124,12 +124,8 @@ func Run() {
 	call := srv.Users.Messages.Send("me", Message{
 		From:    mustEnv("NOTIFY_FROM"),
 		To:      mustEnv("NOTIFY_TO"),
-		Subject: "Hello, there _o/",
-		Body: `
-Howdy!
-
-I'm testing emailing capabilities.
-`,
+		Subject: subject,
+		Body:    body,
 	}.Format())
 	msg, err := call.Do()
 	if err != nil {
