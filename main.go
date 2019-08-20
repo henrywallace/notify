@@ -1,7 +1,7 @@
 package main
 
-import "github.com/henrywallace/homelab/go/notify/gmail"
+import "github.com/henrywallace/homelab/go/notify/cmd"
 
 func main() {
-	gmail.Run()
+	cmd.Execute()
 }
