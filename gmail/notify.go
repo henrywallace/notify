@@ -27,9 +27,6 @@ var (
 )
 
 func init() {
-	SecretsDir = mustEnv("NOTIFY_SECRETS")
-	To = mustEnv("NOTIFY_TO")
-	From = mustEnv("NOTIFY_FROM")
 }
 
 // Retrieve a token, saves the token, then returns the generated client.
@@ -38,10 +35,16 @@ func getClient(config *oauth2.Config) *http.Client {
 	// created automatically when the authorization flow completes for the first
 	// time.
 	hash := fnv.New32a()
+
+	// We assume that each from will be associated with a new login token.
+	// Which is less flexible but also simpler.
+	hash.Write([]byte(From))
+
 	hash.Write([]byte(config.ClientID))
 	hash.Write([]byte(config.ClientSecret))
 	hash.Write([]byte(strings.Join(config.Scopes, " ")))
-	hash.Write([]byte(strings.Join(Scopes, " ")))
+	hash.Write([]byte(strings.Join(Scopes, " "))) // scope changes require new token
+
 	basename := fmt.Sprintf("token-%d.json", hash.Sum32())
 	tokFile := filepath.Join(SecretsDir, basename)
 	tok, err := tokenFromFile(tokFile)
@@ -101,7 +104,10 @@ func mustEnv(env string) string {
 	return val
 }
 
-func Run(subject, body string) {
+func Run(setup bool, subject, body string) {
+	SecretsDir = mustEnv("NOTIFY_SECRETS")
+	From = mustEnv("NOTIFY_FROM")
+
 	cred := filepath.Join(SecretsDir, "google-credentials.json")
 	b, err := ioutil.ReadFile(cred)
 	if err != nil {
@@ -117,6 +123,13 @@ func Run(subject, body string) {
 		log.Fatalf("Unable to parse client secret file to config: %v", err)
 	}
 	client := getClient(config)
+
+	if setup {
+		log.Info("successfully setup new google api")
+		return
+	}
+
+	To = mustEnv("NOTIFY_TO")
 
 	srv, err := gmail.New(client)
 	if err != nil {

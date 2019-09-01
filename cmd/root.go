@@ -10,12 +10,13 @@ import (
 )
 
 var rootCmd = &cobra.Command{
-	Use:   "netwatch",
-	Short: "Watch for activity on a LAN",
+	Use:   "notify",
+	Short: "Send notifications, e.g. gmail emails",
 	RunE:  main,
 }
 
 func init() {
+	rootCmd.Flags().Bool("setup", false, "whether to just do setup")
 	rootCmd.Flags().StringP("type", "t", "gmail", "kind of notifation to send")
 	rootCmd.Flags().StringP("subject", "s", "", "subject of the notification")
 	rootCmd.Flags().StringP("body", "b", "", "body of the notification")
@@ -24,7 +25,8 @@ func init() {
 func main(cmd *cobra.Command, args []string) error {
 	subject := mustString(cmd, "subject")
 	body := mustString(cmd, "body")
-	gmail.Run(subject, body)
+	setup := mustBool(cmd, "setup")
+	gmail.Run(setup, subject, body)
 	return nil
 }
 
@@ -40,6 +42,14 @@ func Execute() {
 
 func mustString(cmd *cobra.Command, name string) string {
 	val, err := cmd.Flags().GetString(name)
+	if err != nil {
+		log.Fatal(err)
+	}
+	return val
+}
+
+func mustBool(cmd *cobra.Command, name string) bool {
+	val, err := cmd.Flags().GetBool(name)
 	if err != nil {
 		log.Fatal(err)
 	}
