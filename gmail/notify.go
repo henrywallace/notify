@@ -31,7 +31,10 @@ func init() {
 }
 
 // Retrieve a token, saves the token, then returns the generated client.
-func getClient(config *oauth2.Config) *http.Client {
+func getClient(
+	config *oauth2.Config,
+	displayQR bool,
+) *http.Client {
 	// The file token.json stores the user's access and refresh tokens, and is
 	// created automatically when the authorization flow completes for the first
 	// time.
@@ -50,23 +53,28 @@ func getClient(config *oauth2.Config) *http.Client {
 	tokFile := filepath.Join(SecretsDir, basename)
 	tok, err := tokenFromFile(tokFile)
 	if err != nil {
-		tok = getTokenFromWeb(config)
+		tok = getTokenFromWeb(config, displayQR)
 		saveToken(tokFile, tok)
 	}
 	return config.Client(context.Background(), tok)
 }
 
 // Request a token from the web, then returns the retrieved token.
-func getTokenFromWeb(config *oauth2.Config) *oauth2.Token {
+func getTokenFromWeb(
+	config *oauth2.Config,
+	displayQR bool,
+) *oauth2.Token {
 	authURL := config.AuthCodeURL("state-token", oauth2.AccessTypeOffline)
 	fmt.Printf("Go to the following link in your browser then type the "+
 		"authorization code: \n%v\n\n", authURL)
-	grid, err := qrencode.Encode(authURL, qrencode.ECLevelQ)
-	if err != nil {
-		log.Errorf("failed to qr encode url %s: %v", authURL, err)
+	if displayQR {
+		grid, err := qrencode.Encode(authURL, qrencode.ECLevelQ)
+		if err != nil {
+			log.Errorf("failed to qr encode url %s: %v", authURL, err)
+		}
+		grid.TerminalOutput(os.Stdout)
+		fmt.Println("")
 	}
-	grid.TerminalOutput(os.Stdout)
-	fmt.Println("")
 
 	var authCode string
 	if _, err := fmt.Scan(&authCode); err != nil {
@@ -115,6 +123,7 @@ func Run(
 	setup bool,
 	subject,
 	body string,
+	displayQR bool,
 ) {
 	SecretsDir = mustEnv("NOTIFY_SECRETS")
 	From = mustEnv("NOTIFY_FROM")
@@ -133,7 +142,7 @@ func Run(
 	if err != nil {
 		log.Fatalf("Unable to parse client secret file to config: %v", err)
 	}
-	client := getClient(config)
+	client := getClient(config, displayQR)
 
 	if setup {
 		log.Info("successfully setup new gmail google api")

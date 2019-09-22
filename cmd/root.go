@@ -17,6 +17,7 @@ var rootCmd = &cobra.Command{
 
 func init() {
 	rootCmd.Flags().Bool("setup", false, "whether to just do setup")
+	rootCmd.Flags().Bool("qr", false, "whether to print qr code for setup url")
 	rootCmd.Flags().StringP("type", "t", "gmail", "kind of notifation to send")
 	rootCmd.Flags().StringP("subject", "s", "", "subject of the notification")
 	rootCmd.Flags().StringP("body", "b", "", "body of the notification")
@@ -26,7 +27,8 @@ func main(cmd *cobra.Command, args []string) error {
 	subject := mustString(cmd, "subject")
 	body := mustString(cmd, "body")
 	setup := mustBool(cmd, "setup")
-	gmail.Run(setup, subject, body)
+	qr := mustBool(cmd, "qr")
+	gmail.Run(setup, subject, body, qr)
 	return nil
 }
 
