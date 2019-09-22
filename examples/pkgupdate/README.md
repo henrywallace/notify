@@ -16,31 +16,31 @@ notifications are single historied. If it were ever exposed, the intruder could
 only get the notification history for one of the machines.
 
 Here are the steps:
-- Obtain a new machine with SSH access at HOSTNAME.
+- Obtain a new machine with SSH access at HOST.
 - Create a new API credentials on GCP with oauth "send only" credentials.
-- Create a new gmail acount with an address corresponding to HOSTNAME. You
+- Create a new gmail acount with an address corresponding to HOST. You
   can avoid providing a number if you create one through your phone's browser.
   Turn on MFA.
 - Build a new version of github.com/henrywallace/homelab/go/notify for
-  HOSTNAME. If compiling on ARM such as with a rasberry pi, see [1]. For a more
+  HOST. If compiling on ARM such as with a rasberry pi, see [1]. For a more
   general list see [2].
-- Move that binary to your machine: `ssh HOSTNAME mkdir -p '~/bin'` and then
-  `scp notify HOSTNAME:'~/bin/'`.
+- Move that binary to your machine: `ssh HOST mkdir -p '~/bin'` and then
+  `scp notify HOST:'~/bin/'`.
 - Setup `notify` on the machine like `NOTIFY_SECRETS=$HOME/.secrets
-  NOTIFY_FROM=hostmachine3000@gmail.com notify --setup`.
+  NOTIFY_FROM=HOST@gmail.com notify --setup`.
 - Fashion a copy of github.com/henyrwallace/dotfiles/blob/master/bin/upd.
 - Set the unit files for systemd [4]:
 ```sh
-ssh HOSTNAME mkdir -p '~/.config/systemd/user'
-scp up up.timer HOSTNAME:'~/.config/systemd/user'
-ssh HOSTNAME mkdir -p '~/bin'
-scp upd HOSTNAME:'~/bin'
+ssh HOST mkdir -p '~/.config/systemd/user'
+scp up up.timer HOST:'~/.config/systemd/user'
+ssh HOST mkdir -p '~/bin'
+scp upd HOST:'~/bin'
 ```
 - Setup the environment variables for the unit [5] (note too [3] which is more
   broad):
 ```sh
 path="~/.config/systemd.d/user/up.service.d/override.conf"
-ssh HOSTNAME mkdir -p '~/.config/systemd.d/user/up.service.d/'.
+ssh HOST mkdir -p '~/.config/systemd.d/user/up.service.d/'.
 scp <(echo """
 [Service]
 ExecStart=$HOME/bin/upd
@@ -48,12 +48,12 @@ Environment="NOTIFY_SECRETS=$HOME/.secrets"
 Environment="NOTIFY_TO=machine.notifications@mycutedomain.pizza"
 Environment="NOTIFY_FROM=hostmachine3000@gmail.com"
 Environment="NOTIFY_BIN=$HOME/bin/notify"
-""") HOSTNAME:'~/.config/systemd.d/user/up.service.d/override.conf'
+""") HOST:'~/.config/systemd.d/user/up.service.d/override.conf'
 ```
 - Enable and start:
 ```sh
-systemctl -H HOSTNAME --user enable up.timer
-systemctl -H HOSTNAME --user enable up --now
+systemctl -H HOST --user enable up.timer
+systemctl -H HOST --user enable up --now
 ```
 - Watch how it's doing `journalctl --user -f -u up`.
 - If you want to fiddle with the unit files or anything else do
