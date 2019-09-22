@@ -11,6 +11,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/qpliu/qrencode-go/qrencode"
 	log "github.com/sirupsen/logrus"
 	"golang.org/x/net/context"
 	"golang.org/x/oauth2"
@@ -59,7 +60,13 @@ func getClient(config *oauth2.Config) *http.Client {
 func getTokenFromWeb(config *oauth2.Config) *oauth2.Token {
 	authURL := config.AuthCodeURL("state-token", oauth2.AccessTypeOffline)
 	fmt.Printf("Go to the following link in your browser then type the "+
-		"authorization code: \n%v\n", authURL)
+		"authorization code: \n%v\n\n", authURL)
+	grid, err := qrencode.Encode(authURL, qrencode.ECLevelQ)
+	if err != nil {
+		log.Errorf("failed to qr encode url %s: %v", authURL, err)
+	}
+	grid.TerminalOutput(os.Stdout)
+	fmt.Println("")
 
 	var authCode string
 	if _, err := fmt.Scan(&authCode); err != nil {
@@ -104,7 +111,11 @@ func mustEnv(env string) string {
 	return val
 }
 
-func Run(setup bool, subject, body string) {
+func Run(
+	setup bool,
+	subject,
+	body string,
+) {
 	SecretsDir = mustEnv("NOTIFY_SECRETS")
 	From = mustEnv("NOTIFY_FROM")
 
@@ -114,7 +125,7 @@ func Run(setup bool, subject, body string) {
 		log.Fatalf("Unable to read client secret file: %v", err)
 	}
 
-	// If modifying these scopes, delete your previously saved token.json.
+	// If modifying these scopes, delete your previously saved token*.json.
 	config, err := google.ConfigFromJSON(
 		b,
 		Scopes...,
@@ -125,7 +136,7 @@ func Run(setup bool, subject, body string) {
 	client := getClient(config)
 
 	if setup {
-		log.Info("successfully setup new google api")
+		log.Info("successfully setup new gmail google api")
 		return
 	}
 
