@@ -2,14 +2,21 @@
 
 set -ex pipefail
 
-echo "NOTIFY_BIN $NOTIFY_BIN"
-
 out=$(yay -Syupq)
 count=$(echo "$out" | rg '://' | wc -l)
-cache="$HOME/.cache/systemd/upg"
+cache="$HOME/.cache/systemd/upd"
 sha_script="$(cat < "$(realpath "$0")" | shasum -a 256 | awk '{print $1}')"
 
 mkdir -p "$(dirname "$cache")"
+if [ ! -f "$cache" ]; then
+  subject="success setting up notifications"
+  body="""
+date: $(date)
+user: $(whoami)
+hostname: $(hostname)
+"""
+  $NOTIFY_BIN -s "$subject" -b "$body"
+fi
 if [ "$count" -gt 0 ]; then
   subject=$(printf "%d package(s) are upgradable %s" "$count" "$(date)")
   echo "$subject"
